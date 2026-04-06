@@ -1,11 +1,110 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Sản phẩm</title>
-</head>
-<body>
 
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Sản phẩm</title>
+    <style>
+        body { font-family: sans-serif; margin: 16px; }
+        label { display: block; margin-top: 8px; }
+        table { border-collapse: collapse; width: 100%; max-width: 900px; margin-top: 16px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        thead { background: #1e40af; color: #fff; }
+        #header-name { cursor: pointer; user-select: none; }
+        #btn-add { margin-top: 12px; }
+    </style>
+</head>
+
+<body>
+    <h1>Quản lý sản phẩm</h1>
+    <label>Tên sản phẩm <input id="input-name" type="text"></label>
+    <label>Danh mục <input id="input-category" type="text"></label>
+    <label>Đơn giá <input id="input-price" type="number"></label>
+    <label>Số lượng <input id="input-quantity" type="number"></label>
+    <button id="btn-add" type="button">Thêm sản phẩm</button>
+
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th id="header-name">Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Đơn giá</th>
+                <th>Số lượng</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        var tbody = document.querySelector('#product-table tbody');
+        var thName = document.getElementById('header-name');
+        var list = [];
+
+        function draw() {
+            tbody.innerHTML = '';
+            for (var i = 0; i < list.length; i++) {
+                var p = list[i];
+                var r = document.createElement('tr');
+                r.innerHTML = '<td>' + (i + 1) + '</td><td>' + p.name + '</td><td>' + (p.category || '') + '</td><td>' + p.price + '</td><td>' + p.quantity + '</td>';
+                tbody.appendChild(r);
+            }
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                list = JSON.parse(xhr.responseText);
+                draw();
+            }
+        };
+        xhr.open('GET', 'products.json');
+        xhr.send();
+
+        thName.addEventListener('click', function () {
+            if (thName.textContent.indexOf('▲') >= 0) {
+                list.sort(function (a, b) {
+                    return b.name.toLowerCase().localeCompare(a.name.toLowerCase());
+                });
+                thName.textContent = 'Tên sản phẩm ▼';
+            } else {
+                list.sort(function (a, b) {
+                    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                });
+                thName.textContent = 'Tên sản phẩm ▲';
+            }
+            draw();
+        });
+
+        document.getElementById('btn-add').addEventListener('click', function () {
+            var n = document.getElementById('input-name');
+            var c = document.getElementById('input-category');
+            var pr = document.getElementById('input-price');
+            var q = document.getElementById('input-quantity');
+            var name = n.value.trim();
+            var price = parseFloat(pr.value);
+            var qty = parseInt(q.value, 10);
+            if (name.length < 3 || !(price > 0) || !Number.isInteger(qty) || qty < 1) {
+                return;
+            }
+            var maxId = 0;
+            for (var j = 0; j < list.length; j++) {
+                if (list[j].id > maxId) {
+                    maxId = list[j].id;
+                }
+            }
+            list.push({ id: maxId + 1, name: name, category: c.value.trim(), price: price, quantity: qty });
+            draw();
+            n.value = '';
+            c.value = '';
+            pr.value = '';
+            q.value = '';
+            try {
+                n.focus();
+            } catch (e) {
+            }
+        });
+    </script>
 </body>
+
 </html>
